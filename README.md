@@ -183,3 +183,110 @@ Robotics / Mechanical Engineering Student
 License
 This project is currently intended as a personal learning and portfolio
 project.
+## Version 4 — MuJoCo Simulation + Machine Learning
+
+Version 4 extends the project from mathematical kinematics to a simulated robotics environment using MuJoCo. The goal is to generate robot data through simulation and connect it to the machine learning pipeline.
+
+### MuJoCo Robot Model
+
+A 2-link planar robotic arm was modeled in MuJoCo with:
+
+- Link 1 length: 0.30 m
+- Link 2 length: 0.15 m
+- 2 revolute joints
+- Joint angle range: -π to +π radians
+- End-effector position represented by `(x, y)` in meters
+
+The MuJoCo model was validated against the analytical forward-kinematics equations using multiple joint configurations. The simulated and analytical positions matched to floating-point precision.
+
+### Workspace Generation
+
+A total of 5,000 random joint configurations were generated and simulated in MuJoCo.
+
+The resulting dataset contains:
+
+- `q1_rad`
+- `q2_rad`
+- `x_m`
+- `y_m`
+
+The dataset is stored in:
+
+`mujoco_workspace_dataset.csv`
+
+The simulated workspace forms the expected annular region.
+
+The theoretical radial workspace is:
+
+- Minimum radius: 0.15 m
+- Maximum radius: 0.45 m
+
+### Workspace Validation
+
+The 5,000 simulated positions were checked against the theoretical workspace limits.
+
+Results:
+
+- Simulated minimum radius: 0.1500000165 m
+- Simulated maximum radius: 0.4499999227 m
+- Points inside theoretical workspace: 5,000 / 5,000
+- Points outside theoretical workspace: 0
+
+**Workspace validation passed.**
+
+### MuJoCo Dataset → Machine Learning
+
+The MuJoCo-generated dataset was divided into:
+
+- Training samples: 4,000
+- Testing samples: 1,000
+
+A Random Forest Regressor was trained to learn:
+
+`(q1, q2) → (x, y)`
+
+Test-set performance:
+
+| Metric | Result |
+|---|---:|
+| MAE | 4.1189 mm |
+| R² | 0.999406 |
+
+### Generalization Test
+
+To evaluate performance on completely new configurations, 1,000 additional joint configurations were generated separately from the original dataset.
+
+MuJoCo generated the ground-truth end-effector positions, and the trained Random Forest predicted the corresponding positions.
+
+Results:
+
+| Metric | Result |
+|---|---:|
+| X MAE | 3.9524 mm |
+| Y MAE | 4.1405 mm |
+| Overall MAE | 4.0464 mm |
+| R² | 0.999348 |
+| Mean Euclidean position error | 6.3911 mm |
+| Maximum Euclidean position error | 61.2203 mm |
+
+### Version 4 Pipeline
+
+```text
+MuJoCo Robot Model
+        ↓
+Random Joint Configurations
+        ↓
+End-Effector Positions
+        ↓
+MuJoCo Dataset
+        ↓
+Random Forest Training
+        ↓
+New Joint Configurations
+        ↓
+ML Predicted Position
+        ↓
+Comparison with MuJoCo Ground Truth
+
+Version 4 establishes a complete simulation-to-machine-learning workflow for the 2-link robotic arm.
+```
